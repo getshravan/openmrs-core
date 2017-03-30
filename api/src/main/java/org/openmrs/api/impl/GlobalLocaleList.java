@@ -17,6 +17,8 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.util.LocaleUtility;
 import org.openmrs.util.OpenmrsConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A utility class which caches the current list of allowed locales, rebuilding the list whenever
@@ -24,6 +26,7 @@ import org.openmrs.util.OpenmrsConstants;
  */
 public class GlobalLocaleList implements GlobalPropertyListener {
 	
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 	private Set<Locale> allowedLocales = null;
 	
 	/**
@@ -33,15 +36,11 @@ public class GlobalLocaleList implements GlobalPropertyListener {
 	public void globalPropertyChanged(GlobalProperty newValue) {
 		allowedLocales = new LinkedHashSet<Locale>();
 		for (String allowedLocaleString : newValue.getPropertyValue().split(",")) {
-			try {
-				Locale allowedLocale = LocaleUtility.fromSpecification(allowedLocaleString.trim());
-				if (allowedLocale != null) {
-					allowedLocales.add(allowedLocale);
-				}
-			}
-			catch (Exception e) {
-				// bad locale spec? just ignore it. the UI should take care of
-				// guiding the user.
+			Locale allowedLocale = LocaleUtility.fromSpecification(allowedLocaleString.trim());
+			if (allowedLocale != null) {
+				allowedLocales.add(allowedLocale);
+			} else {
+				  log.error("Attempt to set invalid locale '{}'", allowedLocaleString);
 			}
 		}
 	}
